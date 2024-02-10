@@ -69,7 +69,8 @@ async def pdf_to_excel(path_to_pdf, pdf_file_path, page_list, i):
 
 """Merges multiple partially converted Excel files into one Excel file.
 
-This merges the Excel files that were generated from batches of PDF pages into a single Excel file for the full PDF. It assumes the partial files were named like {original_pdf_name}_{n}.xlsx and sorts them before concatenating into a single dataframe.
+This merges the Excel files that were generated from batches of PDF pages into a single Excel file for the full PDF. 
+It assumes the partial files were named like {original_pdf_name}_{n}.xlsx and sorts them before concatenating into a single dataframe.
 
 Args:
   pdf_file_path: The path to the original PDF file. Used to construct the merged file name.
