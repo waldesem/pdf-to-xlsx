@@ -11,12 +11,16 @@ def xlsx_to_db(xlsx_file_path):
         os.path.join(base_dir, xlsx_file_path),
     )
 
-    headers = [str(col) for col in df.columns]
+    headers = [f"column_{index}" for index, _ in enumerate(df.columns)]
     df.columns = headers
 
-    df["0"] = df["0"].astype(int)
-    df["1"] = pd.to_datetime(df["1"], dayfirst=True, format="%d.%m.%y").dt.date
-    df["4"] = pd.to_datetime(df["4"], dayfirst=True, format="%d.%m.%y").dt.date
+    df["column_0"] = df["column_0"].astype(int)
+    df["column_1"] = pd.to_datetime(
+        df["column_1"], dayfirst=True, format="%d.%m.%y"
+    ).dt.date
+    df["column_4"] = pd.to_datetime(
+        df["column_4"], dayfirst=True, format="%d.%m.%y"
+    ).dt.date
 
     conn = sqlite3.connect(
         os.path.join(base_dir, xlsx_file_path.replace(".xlsx", ".db"))
