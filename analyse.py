@@ -3,7 +3,21 @@ import sqlite3
 
 import pandas as pd
 
-from pdf_to_excel import base_dir
+from main import base_dir
+
+
+"""Converts an Excel file to a SQLite database.
+
+Args:
+    xlsx_file_path (str): Path to the Excel file to convert.
+
+The Excel file is read into a Pandas DataFrame. The column headers are renamed to 
+generic names like 'column_0'. The first two columns are converted to integer and 
+date types respectively. 
+
+A SQLite database is created with the same name as the Excel file, but with a .db
+extension. The DataFrame is written to a 'xlsx' table in the database.
+"""
 
 
 def xlsx_to_db(xlsx_file_path):

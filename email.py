@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 
-from pdf_to_excel import base_dir
+from main import base_dir
 
 
 load_dotenv(os.path.join(base_dir, ".env"))
@@ -15,9 +15,17 @@ email_password = os.getenv("EMAIL_PASSWORD")
 smtp_server = os.getenv("SMTP_SERVER")
 smtp_port = os.getenv("SMTP_PORT")
 
+"""Sends an email.
+
+Loads the email body content from a text file, sets the subject, 
+sender, and recipient, connects to the SMTP server, logs in, 
+and sends the message.
+"""
+
+
 def send_email(email_receiver):
     textfile = "email.txt"
-    
+
     with open(textfile, "rb") as fp:
         msg = MIMEText(fp.read())
 
