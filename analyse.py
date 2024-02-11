@@ -15,15 +15,9 @@ for xlsx_file_path in os.listdir(base_dir):
         df.columns = headers
 
         df['0'] = df['0'].astype(int)
-        df['1'] = pd.to_datetime(df['1'], dayfirst=True, format='%d.%m.%y').dt.strftime("%d.%m.%Y")
-        df['4'] = pd.to_datetime(df['4'], dayfirst=True, format='%d.%m.%y').dt.strftime("%d.%m.%Y")
+        df['1'] = pd.to_datetime(df['1'], dayfirst=True, format='%d.%m.%y').dt.date
+        df['4'] = pd.to_datetime(df['4'], dayfirst=True, format='%d.%m.%y').dt.date
 
         conn = sqlite3.connect(os.path.join(base_dir, xlsx_file_path.replace(".xlsx", ".db")))
 
         df.to_sql('xlsx', conn, if_exists='replace', index=False)
-
-        df.to_excel(
-            os.path.join(base_dir, xlsx_file_path.replace(".xlsx", "_analyzed.xlsx")),
-            sheet_name="Sheet1",
-            index=False,
-        )
