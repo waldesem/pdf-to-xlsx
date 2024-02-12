@@ -4,7 +4,7 @@ import asyncio
 import camelot
 import pandas as pd
 
-base_dir = os.path.abspath(os.path.join(__file__, "..", ".."))
+from config import base_dir
 
 
 """

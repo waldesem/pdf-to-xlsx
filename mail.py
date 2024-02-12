@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 
-from main import base_dir
+from config import base_dir
 
 
 load_dotenv(os.path.join(base_dir, ".env"))
