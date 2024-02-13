@@ -34,8 +34,7 @@ async def get_pdf_data(pdf_file_path):
 
     await asyncio.gather(*tasks)
 
-    if len(page_list) > 100:
-        await merge_xlsx_files(pdf_file_path)
+    await merge_xlsx_files(pdf_file_path)
 
 
 """Converts a range of pages from a PDF file to Excel format.
@@ -55,9 +54,9 @@ async def pdf_to_excel(path_to_pdf, pdf_file_path, page_list, i):
     pages = ", ".join([str(page) for page in page_list[i : i + 100]])
     tables = camelot.read_pdf(path_to_pdf, pages=pages)
 
-    combined_df = pd.concat([table.df for table in tables], ignore_index=True)
+    df = pd.concat([table.df for table in tables], ignore_index=True)
 
-    combined_df.to_excel(
+    df.to_excel(
         os.path.join(base_dir, pdf_file_path.replace(".pdf", f"_{i//100+1}.xlsx")),
         sheet_name="Sheet1",
         index=False,
@@ -91,7 +90,11 @@ async def merge_xlsx_files(pdf_file_path):
             os.remove(os.path.join(base_dir, xlsx_file_path))
 
     combined_df = pd.concat(dfs, ignore_index=True)
-    combined_df.to_excel(
+    headers = [f"column_{index}" for index, _ in enumerate(combined_df.columns)]
+    combined_df.columns = headers
+    
+    final_df = combined_df.replace("\n", " ", regex=True)
+    final_df.to_excel(
         os.path.join(base_dir, pdf_file_path.replace(".pdf", ".xlsx")),
         sheet_name="Sheet1",
         index=False,

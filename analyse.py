@@ -25,10 +25,6 @@ def xlsx_to_db(xlsx_file_path):
         os.path.join(base_dir, xlsx_file_path),
     )
 
-    headers = [f"column_{index}" for index, _ in enumerate(df.columns)]
-    df.columns = headers
-    df = df.replace("\n", " ", regex=True)
-
     # df["column_0"] = df["column_0"].astype(int)
     # df["column_1"] = pd.to_datetime(
     #     df["column_1"], dayfirst=True, format="%d.%m.%y"
