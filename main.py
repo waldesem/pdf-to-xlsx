@@ -4,24 +4,22 @@ import asyncio
 import camelot
 import pandas as pd
 
-from config import base_dir
-
-
-"""
-Asynchronously extracts tabular data from a PDF file into Excel spreadsheets. 
-
-Splits the PDF pages into batches of 100 pages, and processes each batch concurrently using asyncio.gather. 
-Merges the output Excel files if there are multiple batches.
-
-Args:
-    pdf_file_path (str): Path to the input PDF file.
-
-Returns:
-    None. Outputs Excel files to the same directory as the input PDF.
-"""
+base_dir = os.path.abspath(os.path.join(__file__, "..", ".."))
 
 
 async def get_pdf_data(pdf_file_path):
+    """
+    Asynchronously extracts tabular data from a PDF file into Excel spreadsheets.
+
+    Splits the PDF pages into batches of 100 pages, and processes each batch concurrently using asyncio.gather.
+    Merges the output Excel files if there are multiple batches.
+
+    Args:
+        pdf_file_path (str): Path to the input PDF file.
+
+    Returns:
+        None. Outputs Excel files to the same directory as the input PDF.
+    """
     path_to_pdf = os.path.join(base_dir, pdf_file_path)
 
     handler = camelot.handlers.PDFHandler(path_to_pdf)
@@ -37,20 +35,18 @@ async def get_pdf_data(pdf_file_path):
     await merge_xlsx_files(pdf_file_path)
 
 
-"""Converts a range of pages from a PDF file to Excel format.
-
-Args:
-  path_to_pdf: The file path to the PDF file.
-  pdf_file_path: The file name of the PDF file.
-  page_list: The list of page numbers to convert.
-  i: The start index in page_list to convert pages from.
-
-Returns:
-  None. Saves the converted Excel file to disk.
-"""
-
-
 async def pdf_to_excel(path_to_pdf, pdf_file_path, page_list, i):
+    """Converts a range of pages from a PDF file to Excel format.
+
+    Args:
+    path_to_pdf: The file path to the PDF file.
+    pdf_file_path: The file name of the PDF file.
+    page_list: The list of page numbers to convert.
+    i: The start index in page_list to convert pages from.
+
+    Returns:
+    None. Saves the converted Excel file to disk.
+    """
     pages = ", ".join([str(page) for page in page_list[i : i + 100]])
     tables = camelot.read_pdf(path_to_pdf, pages=pages)
 
@@ -66,17 +62,15 @@ async def pdf_to_excel(path_to_pdf, pdf_file_path, page_list, i):
     )
 
 
-"""Merges multiple partially converted Excel files into one Excel file.
-
-This merges the Excel files that were generated from batches of PDF pages into a single Excel file for the full PDF. 
-It assumes the partial files were named like {original_pdf_name}_{n}.xlsx and sorts them before concatenating into a single dataframe.
-
-Args:
-  pdf_file_path: The path to the original PDF file. Used to construct the merged file name.
-"""
-
-
 async def merge_xlsx_files(pdf_file_path):
+    """Merges multiple partially converted Excel files into one Excel file.
+
+    This merges the Excel files that were generated from batches of PDF pages into a single Excel file for the full PDF.
+    It assumes the partial files were named like {original_pdf_name}_{n}.xlsx and sorts them before concatenating into a single dataframe.
+
+    Args:
+    pdf_file_path: The path to the original PDF file. Used to construct the merged file name.
+    """
     dfs = []
     for xlsx_file_path in sorted(os.listdir(base_dir)):
         if xlsx_file_path.startswith(
@@ -92,7 +86,7 @@ async def merge_xlsx_files(pdf_file_path):
     combined_df = pd.concat(dfs, ignore_index=True)
     headers = [f"column_{index}" for index, _ in enumerate(combined_df.columns)]
     combined_df.columns = headers
-    
+
     final_df = combined_df.replace("\n", " ", regex=True)
     final_df.to_excel(
         os.path.join(base_dir, pdf_file_path.replace(".pdf", ".xlsx")),
@@ -102,15 +96,12 @@ async def merge_xlsx_files(pdf_file_path):
     print("Merged all xlsx files.")
 
 
-"""Main function to convert PDFs to Excel.
-
-Iterates through all PDF files in the provided directory, converts each one to 
-Excel format using the get_pdf_data() function, and gathers all the async tasks.
-Waits for all conversions to complete before exiting.
-"""
-
-
 async def main():
+    """Main function to convert PDFs to Excel.
+    Iterates through all PDF files in the provided directory, converts each one to
+    Excel format using the get_pdf_data() function, and gathers all the async tasks.
+    Waits for all conversions to complete before exiting.
+    """
     tasks = []
     for pdf_file_path in os.listdir(base_dir):
         if pdf_file_path.endswith(".pdf"):
