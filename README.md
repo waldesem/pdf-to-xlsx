@@ -1,4 +1,3 @@
-# PDF to XLSX Converter
+# PDF Converter
 
-Iterates through all PDF files in the parent directory, converts each one to 
-Excel format.
+Converter for PDF files into excel or text files.
