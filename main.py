@@ -194,9 +194,11 @@ class PdfConverter:
         else:
             handler = camelot.handlers.PDFHandler(self.selected_file)
             page_list = handler._get_pages(pages="all")  # noqa: SLF001
+            self.progress_bar["maximum"] = len(page_list)
             for i in range(0, len(page_list), 100):
                 self.pdf_to_excel(page_list, i)
                 self.merge_xlsx_files(self.selected_file.parent)
+                self.progress_bar.step(i)
 
             self.root.after(0, self.conversion_completed)
 
