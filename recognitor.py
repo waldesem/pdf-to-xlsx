@@ -4,7 +4,6 @@ import io
 import os
 import tkinter as tk
 from pathlib import Path
-from threading import Thread
 from tkinter import filedialog, messagebox, ttk
 
 import camelot
@@ -30,7 +29,11 @@ class Recognitor:
         # Variables
         self.input_file = None
         self.output_file = None
-
+        self.file_types = [
+            ("Portable Document Format", "*.PDF *.pdf"),
+            ("Image files", "*.jpg *.jpeg *.png *.bmp"),
+            ("Media files", "*.mp4 *.avi *.mov *.mkv *.mp3 *.wav *.ogg"),
+        ]
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -54,7 +57,6 @@ class Recognitor:
             sticky=tk.W,
             pady=5,
         )
-
         file_frame = ttk.Frame(main_frame)
         file_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
@@ -93,7 +95,6 @@ class Recognitor:
         # Progress bar
         self.progress_label = ttk.Label(main_frame, text="")
         self.progress_label.grid(row=5, column=0, columnspan=2, pady=(20, 5))
-
         self.progress_bar = ttk.Progressbar(main_frame, mode="determinate")
         self.progress_bar.grid(
             row=6,
@@ -106,24 +107,16 @@ class Recognitor:
         # Buttons frame
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=7, column=0, columnspan=2, pady=(20, 0))
-
         # Configure grid weights
         main_frame.columnconfigure(0, weight=1)
         file_frame.columnconfigure(0, weight=1)
 
     def browse_file(self) -> None:
         """Open file dialog to select file."""
-        file_types = [
-            ("Portable Document Format", "*.PDF *.pdf"),
-            ("Image files", "*.jpg *.jpeg *.png *.bmp"),
-            ("Media files", "*.mp4 *.avi *.mov *.mkv *.mp3 *.wav *.ogg"),
-        ]
-
         filename = filedialog.askopenfilename(
             title="Select file",
-            filetypes=file_types,
+            filetypes=self.file_types,
         )
-
         if filename:
             self.input_file = Path(filename)
             self.file_label.config(text=self.input_file.name, foreground="black")
@@ -131,23 +124,12 @@ class Recognitor:
 
     def start_conversion(self) -> None:
         """Start conversion process."""
-        thread = None
-        if self.input_file.suffix.upper() == ".PDF":
-            thread = Thread(target=self.recogize_pdf)
-        elif self.input_file.suffix.upper() in [".JPG", ".JPEG", ".PNG", ".BMP"]:
-            thread = Thread(target=self.recogize_image)
-        elif self.input_file.suffix.upper() in [
-            ".MP4",
-            ".AVI",
-            ".MOV",
-            ".MKV",
-            ".MP3",
-            ".WAV",
-            ".OGG",
-        ]:
-            thread = Thread(target=self.convert_media)
-        thread.daemon = True
-        thread.start()
+        if self.input_file.suffix in self.file_types[0][1]:
+            self.recogize_pdf()
+        elif self.input_file.suffix in self.file_types[1][1]:
+            self.recogize_image()
+        elif self.input_file.suffix in self.file_types[2][1]:
+            self.recogize_media()
 
     def conversion_completed(self) -> None:
         """Handle successful conversion completion."""
@@ -190,22 +172,27 @@ class Recognitor:
                     self.input_file.parent,
                     f"{self.input_file.stem}.txt",
                 )
-                with self.output_file.open("w") as f:
+                with self.output_file.open("w", encoding="utf-8") as f:
                     for text in texts:
                         f.write(text)
                 self.root.after(0, self.conversion_completed)
             else:
                 self.conversion_failed("Failed to extract data from file")
-        else:
-            handler = camelot.handlers.PDFHandler(self.input_file)
-            page_list = handler._get_pages(pages="all")  # noqa: SLF001
-            self.progress_bar["maximum"] = len(page_list)
-            for i in range(0, len(page_list), 100):
-                self.pdf_to_excel(page_list, i)
+        elif pages := self.pdf_table_to_excel():
+            for i in range(0, len(pages), 100):
+                self.pdf_to_excel(pages, i)
                 self.merge_xlsx_files(self.input_file.parent)
                 self.progress_bar.step(i)
-
             self.root.after(0, self.conversion_completed)
+        else:
+            self.conversion_failed("Failed to extract data from file")
+
+    def pdf_table_to_excel(self) -> list:
+        """Extract tables from a PDF file."""
+        handler = camelot.handlers.PDFHandler(self.input_file)
+        pages = handler._get_pages(pages="all")  # noqa: SLF001
+        self.progress_bar["maximum"] = len(pages)
+        return pages
 
     def recogize_image(self) -> None:
         """Extract data from an image file."""
@@ -215,7 +202,7 @@ class Recognitor:
                     self.input_file.parent,
                     f"{self.input_file.stem}.txt",
                 )
-                with self.output_file.open("w") as file_output:
+                with self.output_file.open("w", encoding="utf-8") as file_output:
                     file_output.write(text)
                 self.root.after(0, self.conversion_completed)
             else:
@@ -300,7 +287,7 @@ class Recognitor:
         )
         messagebox.showinfo("Merged in Excel format.")
 
-    def convert_media(self) -> None:
+    def recogize_media(self) -> None:
         """Convert media to text."""
         try:
             # Load the media file. Extract/convert the audio
@@ -309,8 +296,8 @@ class Recognitor:
                 0,
                 lambda: self.progress_label.config(text="Extracting audio..."),
             )
-            file = AudioFileClip(str(self.selected_file))
-            wav_filename = self.selected_file.parent / f"{self.selected_file.stem}.wav"
+            file = AudioFileClip(str(self.input_file))
+            wav_filename = self.input_file.parent / f"{self.input_file.stem}.wav"
             file.write_audiofile(str(wav_filename))
             file.close()
 
@@ -327,9 +314,7 @@ class Recognitor:
 
             # Save text to file
             self.progress_bar.step(30)
-            self.output_file = (
-                self.selected_file.parent / f"{self.selected_file.stem}.txt"
-            )
+            self.output_file = self.input_file.parent / f"{self.input_file.stem}.txt"
             with self.output_file.open("w", encoding="utf-8") as f:
                 f.write(text)
 
@@ -339,7 +324,6 @@ class Recognitor:
             self.root.after(0, self.conversion_completed)
 
         except Exception as e:  # noqa: BLE001
-            # Handle errors - capture the error message first
             error_message = str(e)
             self.root.after(0, lambda msg=error_message: self.conversion_failed(msg))
 
