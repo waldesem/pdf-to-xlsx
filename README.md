@@ -1,4 +1,4 @@
-# Media-in-Text
+# Recognitor
 
 A simple Python GUI application that converts files to text.
 
